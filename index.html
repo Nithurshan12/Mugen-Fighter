@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mugen Fighter Online Game</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: #181c20;
+      color: #fff;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      overflow: hidden;
+    }
+    #game-container {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #252b33 0%, #191919 100%);
+    }
+    #game-canvas {
+      box-shadow: 0 4px 32px #000;
+      border-radius: 8px;
+      background: #222;
+      max-width: 98vw;
+      max-height: 95vh;
+      width: 1000px;
+      height: 600px;
+      display: block;
+    }
+    #loading-screen {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      font-size: 2rem;
+      font-weight: bold;
+      letter-spacing: 2px;
+    }
+    @media (max-width: 1100px) {
+      #game-canvas { width: 95vw; height: 55vw; max-height: 65vh; }
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="game-canvas" width="1000" height="600"></canvas>
+    <div id="loading-screen">Loading Mugen Fighter...</div>
+  </div>
+
+  <script>
+    // Game variables
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+    let lastTimestamp = 0;
+    let gameLoaded = false;
+
+    // Example player object
+    const player = {
+      x: 100, y: 400,
+      width: 50, height: 100,
+      color: '#4ef',
+      velocityX: 0, velocityY: 0,
+      speed: 5,
+      jumping: false
+    };
+
+    // Input handling
+    const keys = {};
+    window.addEventListener('keydown', e => keys[e.code] = true);
+    window.addEventListener('keyup', e => keys[e.code] = false);
+
+    // Responsive resize
+    function resizeCanvas() {
+      const container = document.getElementById('game-container');
+      const aspect = 1000 / 600;
+      let w = window.innerWidth * 0.98;
+      let h = window.innerHeight * 0.95;
+      if (w / h > aspect) w = h * aspect;
+      else h = w / aspect;
+      canvas.style.width = w + 'px';
+      canvas.style.height = h + 'px';
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    // Game loop
+    function gameLoop(timestamp) {
+      const delta = (timestamp - lastTimestamp) / 1000;
+      lastTimestamp = timestamp;
+
+      update(delta);
+      render();
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Game update logic
+    function update(dt) {
+      // Example controls
+      if (keys['ArrowLeft']) player.x -= player.speed;
+      if (keys['ArrowRight']) player.x += player.speed;
+      if (keys['Space'] && !player.jumping) {
+        player.velocityY = -16;
+        player.jumping = true;
+      }
+      // Gravity
+      player.velocityY += 0.7;
+      player.y += player.velocityY;
+      // Ground collision
+      if (player.y + player.height > 580) {
+        player.y = 580 - player.height;
+        player.velocityY = 0;
+        player.jumping = false;
+      }
+      // Keep in bounds
+      player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+    }
+
+    // Game rendering logic
+    function render() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Draw ground
+      ctx.fillStyle = "#393";
+      ctx.fillRect(0, 580, canvas.width, 20);
+      // Draw player
+      ctx.fillStyle = player.color;
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+      // Example info
+      ctx.fillStyle = "#fff";
+      ctx.font = "20px Arial";
+      ctx.fillText("Use Arrow Keys to Move, Space to Jump", 20, 40);
+    }
+
+    // Simulate asset loading
+    function loadGame() {
+      setTimeout(() => {
+        gameLoaded = true;
+        document.getElementById('loading-screen').style.display = 'none';
+        resizeCanvas();
+        requestAnimationFrame(gameLoop);
+      }, 1500); // Simulate 1.5s load
+    }
+
+    // Start
+    window.onload = () => {
+      resizeCanvas();
+      loadGame();
+    };
+  </script>
+</body>
+</html>
